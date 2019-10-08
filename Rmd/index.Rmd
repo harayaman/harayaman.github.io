@@ -1,0 +1,15 @@
+---
+title: "harayaman"
+author: "harayaman"
+date: "updated 2019年10月8日"
+output: html_document
+knit: (function(inputFile, encoding) {
+  rmarkdown::render(inputFile, encoding = encoding, output_dir = "../") })
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## presentation
+2019/10/11 @fukuoka.R  <a href="./html/20191011_how_to_hide_auth_info_harayaman.html">認証情報の隠し方</a>
