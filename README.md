@@ -1,2 +1,2 @@
 # harayaman.github.io
-home page of harayama
+home page of harayaman
