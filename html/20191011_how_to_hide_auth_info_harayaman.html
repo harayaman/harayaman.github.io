@@ -702,11 +702,11 @@ db_port
 <a class="sourceLine" id="cb11-2" data-line-number="2"><span class="co"># 略</span></a>
 <a class="sourceLine" id="cb11-3" data-line-number="3"></a>
 <a class="sourceLine" id="cb11-4" data-line-number="4"><span class="co"># 認証情報取得</span></a>
-<a class="sourceLine" id="cb11-5" data-line-number="5">db_user &lt;-<span class="st"> </span><span class="kw">Sys.getenv</span>(<span class="st">'db_user'</span>)</a>
-<a class="sourceLine" id="cb11-6" data-line-number="6">db_password &lt;-<span class="st"> </span><span class="kw">Sys.getenv</span>(<span class="st">'db_password'</span>)</a>
-<a class="sourceLine" id="cb11-7" data-line-number="7">db_name &lt;-<span class="st"> </span><span class="kw">Sys.getenv</span>(<span class="st">'db_name'</span>)</a>
-<a class="sourceLine" id="cb11-8" data-line-number="8">db_host &lt;-<span class="st"> </span><span class="kw">Sys.getenv</span>(<span class="st">'db_host'</span>)</a>
-<a class="sourceLine" id="cb11-9" data-line-number="9">db_port &lt;-<span class="st"> </span><span class="kw">as.integer</span>(<span class="kw">Sys.getenv</span>(<span class="st">'db_port'</span>))</a>
+<a class="sourceLine" id="cb11-5" data-line-number="5">db_user &lt;-<span class="st"> </span><span class="kw">getOption</span>(<span class="st">'db_user'</span>)</a>
+<a class="sourceLine" id="cb11-6" data-line-number="6">db_password &lt;-<span class="st"> </span><span class="kw">getOption</span>(<span class="st">'db_password'</span>)</a>
+<a class="sourceLine" id="cb11-7" data-line-number="7">db_name &lt;-<span class="st"> </span><span class="kw">getOption</span>(<span class="st">'db_name'</span>)</a>
+<a class="sourceLine" id="cb11-8" data-line-number="8">db_host &lt;-<span class="st"> </span><span class="kw">getOption</span>(<span class="st">'db_host'</span>)</a>
+<a class="sourceLine" id="cb11-9" data-line-number="9">db_port &lt;-<span class="st"> </span><span class="kw">as.integer</span>(<span class="kw">getOption</span>(<span class="st">'db_port'</span>))</a>
 <a class="sourceLine" id="cb11-10" data-line-number="10"></a>
 <a class="sourceLine" id="cb11-11" data-line-number="11"><span class="co"># DB接続オブジェクト</span></a>
 <a class="sourceLine" id="cb11-12" data-line-number="12">mydb &lt;-<span class="st">  </span><span class="kw">dbConnect</span>(<span class="kw">MySQL</span>(), <span class="dt">user =</span> db_user, <span class="dt">password =</span> db_password,</a>
@@ -754,7 +754,7 @@ db_port
 <li>Global Option
 </td>
 <td>
-.Renvironファイルと同様の使い方<br>もともと自分で変数を作成するための場所ではないと思われるため、わざわざ使用する意義は薄い？
+.Renvironファイルと同様の使い方<br>もともと自分で変数を作成するための場所ではないと思われるため、わざわざ使用するメリットはなさそう？
 </td>
 </tr>
 </table></li>
