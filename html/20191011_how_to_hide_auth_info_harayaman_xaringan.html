@@ -1,0 +1,405 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="" xml:lang="">
+  <head>
+    <title>認証情報の隠し方</title>
+    <meta charset="utf-8" />
+    <meta name="author" content="harayaman" />
+    <link href="libs/remark-css-0.0.1/default.css" rel="stylesheet" />
+    <link href="libs/remark-css-0.0.1/default-fonts.css" rel="stylesheet" />
+  </head>
+  <body>
+    <textarea id="source">
+class: center, middle, inverse, title-slide
+
+# 認証情報の隠し方
+### harayaman
+### 2019/10/11
+
+---
+
+
+---
+## 背景
+- DB接続のテストコードを書いていた時&lt;br&gt;
+&lt;br&gt;
+&lt;get_data_from_DB.R&gt;
+
+```r
+# パッケージ読込
+# 略
+
+# 認証情報
+db_user &lt;- 'dbuser'
+db_password &lt;- 'dbpassword'
+db_name &lt;- 'dbname'
+db_host &lt;- 'dbhost' 
+db_port &lt;- 99999
+
+# DB接続オブジェクト
+mydb &lt;-  dbConnect(MySQL(), user = db_user, password = db_password,
+                   dbname = db_name, host = db_host, port = db_port)
+
+# クエリを送ってデータ取得
+rs &lt;- dbSendQuery(mydb, "select * from table")
+df &lt;- fetch(rs, n = -1)
+```
+
+---
+## 背景
+- このコードはそのまま共有できない！&lt;br&gt;
+- 認証情報のところは隠したい！&lt;br&gt;
+
+---
+## 調べてみたらありました
+- https://db.rstudio.com/best-practices/managing-credentials/
+- ↑DB接続に必要な認証情報の隠し方に関する記事
+- 上から推奨順(多い!)
+1. Integrated Security with DSN
+2. Integrated Security without DSN
+3. Encrypt credentials with keyring pakcage
+4. Use a configuration file with the config package
+5. Environment variables using the .Renviron file
+6. Using the options base R command
+7. Prompt for credentials using RStudio IDE
+
+---
+## 本日紹介する方法
+- DB接続以外でも使えるものからピックアップ（&lt;span style="color:red"&gt;赤字&lt;/span&gt;）
+1. Integrated security with DSN &lt;br&gt;
+2. Integrated security without DSN &lt;br&gt; 
+3. &lt;span style="color:red"&gt;Encrypt credentials with keyring pakcage&lt;/span&gt;
+4. Use a configuration file with the config package
+5. &lt;span style="color:red"&gt;Environment variables using the .Renviron file&lt;/span&gt;
+6. &lt;span style="color:red"&gt;Using the options base R command&lt;/span&gt;
+7. Prompt for credentials using RStudio IDE
+
+---
+## 前提
+- RStudio Desktopを使用
+
+---
+## 3.Encrypt credentials with keyring pakcage
+- keyringパッケージでOSの鍵管理機能を使用する方法
+  - WindowsならCredential Store, MacOSならKeychain
+
+---
+## 登録例
+&lt;table border="1" cellpadding="6" cellspacing="0"&gt;
+ &lt;caption&gt;service = db_auth_info&lt;/caption&gt;
+  &lt;tr&gt;
+    &lt;td&gt;username&lt;/td&gt;
+    &lt;td&gt;password&lt;/td&gt;
+  &lt;/tr&gt;
+  &lt;tr&gt;
+    &lt;td&gt;db_user&lt;/td&gt;
+    &lt;td&gt;dbuser&lt;/td&gt;
+  &lt;/tr&gt;
+  &lt;tr&gt;
+    &lt;td&gt;db_password&lt;/td&gt;
+    &lt;td&gt;dbpassword&lt;/td&gt;
+  &lt;/tr&gt;
+  &lt;tr&gt;
+    &lt;td&gt;db_name&lt;/td&gt;
+    &lt;td&gt;dbname&lt;/td&gt;
+  &lt;/tr&gt;
+  &lt;tr&gt;
+    &lt;td&gt;db_host&lt;/td&gt;
+    &lt;td&gt;dbhost&lt;/td&gt;
+  &lt;/tr&gt;
+  &lt;tr&gt;
+    &lt;td&gt;db_port&lt;/td&gt;
+    &lt;td&gt;99999&lt;/td&gt;
+  &lt;/tr&gt;
+&lt;/table&gt;
+
+コンソールか別のスクリプトファイルで実行
+
+```r
+keyring::key_set_with_value(service = "db_auth_info", username = "db_user", password = 'dbuser')
+keyring::key_set_with_value(service = "db_auth_info", username = "db_password", password = 'dbpassword')
+keyring::key_set_with_value(service = "db_auth_info", username = "db_name", password = 'dbname')
+keyring::key_set_with_value(service = "db_auth_info", username = "db_host", password = 'dbhost')
+keyring::key_set_with_value(service = "db_auth_info", username = 'db_port', password = '99999')
+```
+
+---
+## 取得例
+
+```r
+db_user &lt;- keyring::key_get(service = "db_auth_info", 
+                            username = 'db_user')
+db_password &lt;- keyring::key_get(service = "db_auth_info", 
+                                username = 'db_password')
+db_name &lt;- keyring::key_get(service = "db_auth_info", 
+                            username = 'db_name')
+db_host &lt;- keyring::key_get(service = "db_auth_info", 
+                            username = 'db_host')
+db_port &lt;- keyring::key_get(service = "db_auth_info", 
+                            username = 'db_port')
+```
+
+---
+## 使用例
+&lt;get_data_from_DB.R&gt;
+
+```r
+# パッケージ読込
+# 略
+
+# 認証情報取得
+db_user &lt;- keyring::key_get(service = "db_auth_info", username = 'db_user')
+db_password &lt;- keyring::key_get(service = "db_auth_info", username = 'db_password')
+db_name &lt;- keyring::key_get(service = "db_auth_info", username = 'db_name')
+db_host &lt;- keyring::key_get(service = "db_auth_info", username = 'db_host')
+db_port &lt;- as.integer(keyring::key_get(service = "db_auth_info", username = 'db_port'))
+
+# DB接続オブジェクト
+mydb &lt;-  dbConnect(MySQL(), user = db_user, password = db_password,
+                   dbname = db_name, host = db_host, port = db_port)
+
+# クエリを送ってデータ取得
+rs &lt;- dbSendQuery(mydb, "select * from table")
+df &lt;- fetch(rs, n = -1)
+```
+
+---
+## 5. Environment variables using the .Renviron file
+- .RenvironはRの環境変数を設定するファイル
+  - .RenvironはRの起動時に読み込まれる
+  - ユーザーのHomeディレクトリに置かれることが多い?
+---
+## 登録例
+&lt;.Renviron&gt;
+
+```r
+db_user='dbuser'
+db_password='dbpassword'
+db_name='dbname'
+db_host='dbhost' 
+db_port='99999'
+```
+
+---
+## 取得例
+
+```r
+db_user &lt;- Sys.getenv('db_user')
+db_password &lt;- Sys.getenv('db_password')
+db_name &lt;- Sys.getenv('db_name')
+db_host &lt;- Sys.getenv('db_host')
+db_port &lt;- as.integer(Sys.getenv('db_port'))
+```
+
+---
+## 使用例
+&lt;get_data_from_DB.R&gt;
+
+```r
+# パッケージ読込
+# 略
+
+# 認証情報取得
+db_user &lt;- Sys.getenv('db_user')
+db_password &lt;- Sys.getenv('db_password')
+db_name &lt;- Sys.getenv('db_name')
+db_host &lt;- Sys.getenv('db_host')
+db_port &lt;- as.integer(Sys.getenv('db_port'))
+
+# DB接続オブジェクト
+mydb &lt;-  dbConnect(MySQL(), user = db_user, password = db_password,
+                   dbname = db_name, host = db_host, port = db_port)
+
+# クエリを送ってデータ取得
+rs &lt;- dbSendQuery(mydb, "select * from table")
+df &lt;- fetch(rs, n = -1)
+```
+
+---
+## 6.Using the options base R command
+- RのGloabl Optionsに書き込む方法
+- Global Optionsは計算の仕方や表示に関する設定
+  - 例 : 'encoding' (文字コード)
+  - 例 : 'max.print' (printできる最大のデータ量)
+
+```r
+# 文字コード変更
+options(encoding = 'UTF-8')
+```
+- 既存の設定変更以外に、自分で名前をつけて変数を作成することができる。
+
+---
+## 登録例
+コンソールか別のスクリプトファイルで実行
+
+```r
+options(db_user = 'dbuser')
+options(db_password = 'dbpassword')
+options(db_name = 'dbname')
+options(db_host = 'dbhost')
+options(db_port = '99999')
+```
+
+---
+## 取得例
+
+```r
+db_user &lt;- getOption('db_user')
+db_password &lt;- getOption('db_password')
+db_name &lt;- getOption('db_name')
+db_host &lt;- getOption('db_host')
+db_port &lt;- as.integer(getOption('db_port'))
+```
+
+---
+## 使用例
+&lt;get_data_from_DB.R&gt;
+
+```r
+# パッケージ読込
+# 略
+
+# 認証情報取得
+db_user &lt;- getOption('db_user')
+db_password &lt;- getOption('db_password')
+db_name &lt;- getOption('db_name')
+db_host &lt;- getOption('db_host')
+db_port &lt;- as.integer(getOption('db_port'))
+
+# DB接続オブジェクト
+mydb &lt;-  dbConnect(MySQL(), user = db_user, password = db_password,
+                   dbname = db_name, host = db_host, port = db_port)
+
+# クエリを送ってデータ取得
+rs &lt;- dbSendQuery(mydb, "select * from table")
+df &lt;- fetch(rs, n = -1)
+```
+
+---
+## 自分なりの整理
+&lt;table border="1" cellpadding="6" cellspacing="0"&gt;
+ &lt;caption&gt;手法比較&lt;/caption&gt;
+  &lt;tr&gt;
+    &lt;td&gt;手法&lt;/td&gt;
+    &lt;td&gt;特徴&lt;/td&gt;
+  &lt;/tr&gt;
+  &lt;tr&gt;
+    &lt;td&gt;3. keyringパッケージ&lt;/td&gt;
+    &lt;td&gt;鍵のセットに名前をつけられるため、同じ名前を異なる鍵のセットで使用できる。&lt;/td&gt;
+  &lt;/tr&gt;
+  &lt;tr&gt;
+    &lt;td&gt;5. Renvironファイル&lt;/td&gt;
+    &lt;td&gt;もともと環境変数を設定するファイルのため、隠し場所としてはわかりやすい。&lt;br&gt;鍵のセットに名前をつけられないため、同じ名前の変数を作れない。&lt;/td&gt;
+  &lt;/tr&gt;
+  &lt;tr&gt;
+    &lt;td&gt;6. Global Option&lt;/td&gt;
+    &lt;td&gt;.Renvironファイルと同様の使い方&lt;br&gt;もともと自分で変数を作成するための場所ではないと思われるため、わざわざ使用するメリットはなさそう？&lt;/td&gt;
+  &lt;/tr&gt;
+&lt;/table&gt;
+
+---
+## 自分なりの結論
+- 特に理由がなければ3.keyring パッケージでいいのでは？
+  - ※RStudio Desktopを使用する場合。
+
+---
+&lt;br&gt;
+&lt;br&gt;
+&lt;br&gt;
+&lt;br&gt;
+&lt;br&gt;
+&lt;br&gt;
+&lt;br&gt;
+&lt;br&gt;
+&lt;br&gt;
+&lt;br&gt;
+&lt;center&gt;&lt;font size = 7&gt;ありがとうございました！&lt;/font&gt;&lt;/center&gt;
+    </textarea>
+<style data-target="print-only">@media screen {.remark-slide-container{display:block;}.remark-slide-scaler{box-shadow:none;}}</style>
+<script src="https://remarkjs.com/downloads/remark-latest.min.js"></script>
+<script>var slideshow = remark.create({
+"highlightStyle": "github",
+"countIncrementalSlides": false
+});
+if (window.HTMLWidgets) slideshow.on('afterShowSlide', function (slide) {
+  window.dispatchEvent(new Event('resize'));
+});
+(function(d) {
+  var s = d.createElement("style"), r = d.querySelector(".remark-slide-scaler");
+  if (!r) return;
+  s.type = "text/css"; s.innerHTML = "@page {size: " + r.style.width + " " + r.style.height +"; }";
+  d.head.appendChild(s);
+})(document);
+
+(function(d) {
+  var el = d.getElementsByClassName("remark-slides-area");
+  if (!el) return;
+  var slide, slides = slideshow.getSlides(), els = el[0].children;
+  for (var i = 1; i < slides.length; i++) {
+    slide = slides[i];
+    if (slide.properties.continued === "true" || slide.properties.count === "false") {
+      els[i - 1].className += ' has-continuation';
+    }
+  }
+  var s = d.createElement("style");
+  s.type = "text/css"; s.innerHTML = "@media print { .has-continuation { display: none; } }";
+  d.head.appendChild(s);
+})(document);
+// delete the temporary CSS (for displaying all slides initially) when the user
+// starts to view slides
+(function() {
+  var deleted = false;
+  slideshow.on('beforeShowSlide', function(slide) {
+    if (deleted) return;
+    var sheets = document.styleSheets, node;
+    for (var i = 0; i < sheets.length; i++) {
+      node = sheets[i].ownerNode;
+      if (node.dataset["target"] !== "print-only") continue;
+      node.parentNode.removeChild(node);
+    }
+    deleted = true;
+  });
+})();</script>
+
+<script>
+(function() {
+  var links = document.getElementsByTagName('a');
+  for (var i = 0; i < links.length; i++) {
+    if (/^(https?:)?\/\//.test(links[i].getAttribute('href'))) {
+      links[i].target = '_blank';
+    }
+  }
+})();
+</script>
+
+<script>
+slideshow._releaseMath = function(el) {
+  var i, text, code, codes = el.getElementsByTagName('code');
+  for (i = 0; i < codes.length;) {
+    code = codes[i];
+    if (code.parentNode.tagName !== 'PRE' && code.childElementCount === 0) {
+      text = code.textContent;
+      if (/^\\\((.|\s)+\\\)$/.test(text) || /^\\\[(.|\s)+\\\]$/.test(text) ||
+          /^\$\$(.|\s)+\$\$$/.test(text) ||
+          /^\\begin\{([^}]+)\}(.|\s)+\\end\{[^}]+\}$/.test(text)) {
+        code.outerHTML = code.innerHTML;  // remove <code></code>
+        continue;
+      }
+    }
+    i++;
+  }
+};
+slideshow._releaseMath(document);
+</script>
+<!-- dynamically load mathjax for compatibility with self-contained -->
+<script>
+(function () {
+  var script = document.createElement('script');
+  script.type = 'text/javascript';
+  script.src  = 'https://mathjax.rstudio.com/latest/MathJax.js?config=TeX-MML-AM_CHTML';
+  if (location.protocol !== 'file:' && /^https?:/.test(script.src))
+    script.src  = script.src.replace(/^https?:/, '');
+  document.getElementsByTagName('head')[0].appendChild(script);
+})();
+</script>
+  </body>
+</html>
